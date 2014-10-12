@@ -12,7 +12,7 @@ public class ApplicationUtility {
 
 		String result = "";
 		Properties prop = new Properties();
-		String propFileName = "Resources/config.properties";
+		String propFileName = "src/main/resources/config.properties";
 		prop.load(new FileInputStream(propFileName));
 		// get the property value and print it out
 		result = prop.getProperty(propertyName);
