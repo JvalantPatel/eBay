@@ -1,4 +1,4 @@
-package main.java.ebay.controllers;
+package ebay.controllers;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.SpringApplication;

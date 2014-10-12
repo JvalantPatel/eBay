@@ -1,32 +1,49 @@
-package main.java.ebay.data;
+package ebay.data;
 
 
 public class Employee {
 
-    private  String name;
+    private  String firstName;
+    private  String lastName;
     private  String email;
-
-    public Employee(String name, String email) {
-        this.name = name;
-        this.email = email;
-    }
-
-	public String getName() {
-		return name;
+    private int empId;
+    private String qId;
+    
+    
+	public String getFirstName() {
+		return firstName;
 	}
-
-	public void setName(String name) {
-		this.name = name;
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
 	}
-
+	public String getLastName() {
+		return lastName;
+	}
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
 	public String getEmail() {
 		return email;
 	}
-
 	public void setEmail(String email) {
 		this.email = email;
 	}
+	public int getEmpId() {
+		return empId;
+	}
+	public void setEmpId(int empId) {
+		this.empId = empId;
+	}
+	public String getqId() {
+		return qId;
+	}
+	public void setqId(String qId) {
+		this.qId = qId;
+	}
+    
+    
 
+   
     
    
 }
