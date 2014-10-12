@@ -36,7 +36,7 @@ public interface EmployeeDataDao {
 
 	public String insertYearData(Map<String, Participant> pMap,
 			Map<Integer, List<String>> eventUserMap,
-			Map<String, List<String>> eventLocationMap,
+			Map<String, List<Integer>> eventLocationMap,
 			Map<String, Integer> eventMap, String year)  throws SQLException;
 
 }

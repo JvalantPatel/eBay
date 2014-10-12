@@ -2,6 +2,7 @@ package ebay.controllers;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +10,6 @@ import java.util.Set;
 
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -21,7 +21,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import ebay.dao.EmployeeDataDao;
 import ebay.dao.EmployeeDataDaoImpl;
-import ebay.data.Employee;
 import ebay.data.FilterResponseData;
 import ebay.data.LoginBean;
 import ebay.data.Participant;
@@ -35,36 +34,27 @@ public class ExcelDataController {
 	
 	private EmployeeDataDao employeeDataDao;
 	    
-    @RequestMapping(method = RequestMethod.GET, value = "/employee")
-    public Employee greeting(@RequestParam(value="name", required=false, defaultValue="World") String name) {
-    	Employee emp = null;
-    	employeeDataDao = new EmployeeDataDaoImpl();
-		try {
-			emp = employeeDataDao.getEmployee();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-        return emp;
-    }
+	/*
+	 * @RequestMapping(method = RequestMethod.GET, value = "/employee") public
+	 * Employee greeting(@RequestParam(value="name", required=false,
+	 * defaultValue="World") String name) { Employee emp = null; employeeDataDao
+	 * = new EmployeeDataDaoImpl(); try { emp = employeeDataDao.getEmployee(); }
+	 * catch (IOException e) { 
+	 * e.printStackTrace(); } catch (SQLException e) { 
+	 * catch block e.printStackTrace(); } return emp; }
+	 */
     
     @SuppressWarnings("unchecked")
 	@RequestMapping(value="/upload", method=RequestMethod.POST)
-    public @ResponseBody String handleFileUpload(@RequestParam("name") String name,
+    public @ResponseBody String handleFileUpload(@RequestParam("eventName") String eventName,
+    		@RequestParam("year") int year,
             @RequestParam("file") MultipartFile file){
     	employeeDataDao = new EmployeeDataDaoImpl();
+    	String message = null;
         if (!file.isEmpty()) {
             try {
             	
             	XSSFWorkbook book = new XSSFWorkbook(file.getInputStream());
-//                byte[] bytes = file.getBytes();
-//                BufferedOutputStream stream =
-//                        new BufferedOutputStream(new FileOutputStream(new File(name + "-uploaded")));
-//                stream.write(bytes);
-//                stream.close();
             	ExcelReader reader = new ExcelReader();
             	Map<String, Object> resultMap = reader.readEventData(book);
 				Map<String, Participant> pMap = (Map<String, Participant>) resultMap.get("participant");
@@ -76,15 +66,15 @@ public class ExcelDataController {
         				System.out.println(s);
         			}
         			
-        			employeeDataDao.insertHistoricData(pMap, locationSet, "Intial Test", 2012);
+        			message = employeeDataDao.insertHistoricData(pMap, locationSet, eventName, year);
+        			
         		}
-                return "You successfully uploaded " + name + " into " + name + "-uploaded !";
+                
             } catch (Exception e) {
-                return "You failed to upload " + name + " => " + e.getMessage();
+                message = "fail";
             }
-        } else {
-            return "You failed to upload " + name + " because the file was empty.";
-        }
+        } 
+        return message;
     }
     
     @ResponseStatus(HttpStatus.CREATED)
@@ -96,12 +86,10 @@ public class ExcelDataController {
     		System.out.println(userSignUp);
 			employeeDataDao.createUser(userSignUp);
 		} catch (IOException | SQLException | UserDataException e) {
-			// TODO Auto-generated catch block
-			
 			e.printStackTrace();
-			return "failed";
+			return "fail";
 		}
-		return "pass";    
+		return "success";    
     }
     
     @ResponseStatus(HttpStatus.CREATED)
@@ -113,12 +101,9 @@ public class ExcelDataController {
     		System.out.println(loginBean);
     		userAuthorized=employeeDataDao.authorizeUser(loginBean);
 		} catch (Exception ex) {
-			// TODO Auto-generated catch block
-			
-			ex.printStackTrace();
-			return "failed";
+			return "fail";
 		}
-    	if(userAuthorized) return "pass";
+    	if(userAuthorized) return "success";
     	else return "fail";
 		
     }
@@ -132,8 +117,7 @@ public class ExcelDataController {
     		
     		listEvent=employeeDataDao.getAllEvents();
 		} catch (Exception ex) {
-			// TODO Auto-generated catch block			
-			ex.printStackTrace();
+			 listEvent = new ArrayList<String>();
 		}
     	return listEvent;		
     }
@@ -146,8 +130,7 @@ public class ExcelDataController {
     		
     		listEvent=employeeDataDao.getAllLocations();
 		} catch (Exception ex) {
-			// TODO Auto-generated catch block			
-			ex.printStackTrace();
+			listEvent = new ArrayList<String>();
 		}
     	return listEvent;		
     }
@@ -160,8 +143,7 @@ public class ExcelDataController {
     		
     		listEvent=employeeDataDao.getAllYears();
 		} catch (Exception ex) {
-			// TODO Auto-generated catch block			
-			ex.printStackTrace();
+			listEvent = new ArrayList<String>();
 		}
     	return listEvent;		
     }
@@ -217,34 +199,28 @@ public class ExcelDataController {
     public @ResponseBody String uploadYearData(@RequestParam("year") String year,
             @RequestParam("file") MultipartFile file){
     	employeeDataDao = new EmployeeDataDaoImpl();
+    	String message = null;
         if (!file.isEmpty()) {
             try {
             	
             	XSSFWorkbook book = new XSSFWorkbook(file.getInputStream());
-//                byte[] bytes = file.getBytes();
-//                BufferedOutputStream stream =
-//                        new BufferedOutputStream(new FileOutputStream(new File(name + "-uploaded")));
-//                stream.write(bytes);
-//                stream.close();
             	ExcelReader reader = new ExcelReader();
             	Map<String, Object> resultMap = reader.readYearData(book);
             	
             	
     			Map<Integer, List<String>> eventUserMap = (Map<Integer, List<String>>) resultMap.get("eventUserMap"); 
-    			Map<String, List<String>> eventLocationMap = (Map<String, List<String>>) resultMap.get("eventLocationMap");
+    			Map<String, List<Integer>> eventLocationMap = new HashMap<String, List<Integer>>();
     			Map<String, Integer> eventMap = (Map<String, Integer>) resultMap.get("eventMap");
 				Map<String, Participant> pMap = (Map<String, Participant>) resultMap.get("participant");
         		
         		if(pMap != null && eventUserMap != null && eventLocationMap != null && eventMap != null){
         			System.out.println("calling dao");
-        			String s = employeeDataDao.insertYearData(pMap, eventUserMap, eventLocationMap, eventMap, year);
+        			message = employeeDataDao.insertYearData(pMap, eventUserMap, eventLocationMap, eventMap, year);
         		}
-                return "You successfully uploaded " + year + " into " + year + "-uploaded !";
             } catch (Exception e) {
-                return "You failed to upload " + year + " => " + e.getMessage();
+                message = "fail";
             }
-        } else {
-            return "You failed to upload " + year + " because the file was empty.";
-        }
+        } 
+        return message;
     }
 }

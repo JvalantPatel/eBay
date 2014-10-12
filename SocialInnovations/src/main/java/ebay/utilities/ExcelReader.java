@@ -1,7 +1,5 @@
 package ebay.utilities;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -59,13 +57,21 @@ public class ExcelReader {
 				participant.setEmpId(getCellValue(cell));
 
 				// StringBuffer name = new StringBuffer();
-				cell = row.getCell(map.get("fName"));
-				participant.setFname(getCellValue(cell));
+				if (!map.containsKey("fullName")) {
+					cell = row.getCell(map.get("fName"));
+					participant.setFname(getCellValue(cell));
 
-				// if (pMap.containsKey("lName")) {
-				cell = row.getCell(map.get("lName"));
-				participant.setLname(getCellValue(cell));
-				// }
+					// if (pMap.containsKey("lName")) {
+					cell = row.getCell(map.get("lName"));
+					participant.setLname(getCellValue(cell));
+					// }
+				} else {
+					cell = row.getCell(map.get("fullName"));
+					String value = getCellValue(cell);
+					String[] names = value.split("\\s+");
+					participant.setFname(names[0]);
+					participant.setLname(names[1]);
+				}
 
 				cell = row.getCell(map.get("location"));
 				String location = getCellValue(cell);
@@ -113,6 +119,8 @@ public class ExcelReader {
 		colNameMap.put("employeee email", "email");
 		colNameMap.put("email address", "email");
 
+		colNameMap.put("full name", "fullName");
+
 		for (int colnum = 0; colnum <= row.getLastCellNum(); colnum++) {
 			cell = row.getCell(colnum);
 			if (cell != null) {
@@ -134,13 +142,14 @@ public class ExcelReader {
 	public Map<String, Object> readYearData(XSSFWorkbook workbook) {
 		Map<String, Object> resultMap = new HashMap<String, Object>();
 		try {
-/*
-			FileInputStream file = new FileInputStream(
-					new File(
-							"C:/Users/Jvalant/Downloads/2013 Participation Tracking(1).xlsx"));
-
-			// Create Workbook instance holding reference to .xlsx file
-			XSSFWorkbook workbook = new XSSFWorkbook(file);*/
+			/*
+			 * FileInputStream file = new FileInputStream( new File(
+			 * "C:/Users/Jvalant/Downloads/2013 Participation Tracking(1).xlsx"
+			 * ));
+			 * 
+			 * // Create Workbook instance holding reference to .xlsx file
+			 * XSSFWorkbook workbook = new XSSFWorkbook(file);
+			 */
 
 			// Get first/desired sheet from the workbook
 			XSSFSheet sheet = workbook.getSheetAt(0);
@@ -158,14 +167,12 @@ public class ExcelReader {
 			int maxRow = sheet.getPhysicalNumberOfRows();
 			XSSFRow row = null;
 			XSSFCell cell = null;
-			
-			
+
 			Map<String, Participant> pMap = null;
 			Map<Integer, List<String>> eventUserMap = new HashMap<Integer, List<String>>();
-			Map<String, List<String>> eventLocationMap = new HashMap<String, List<String>>();
+			Map<String, List<Integer>> eventLocationMap = new HashMap<String, List<Integer>>();
 			Map<String, Integer> eventMap = new HashMap<String, Integer>();
-			
-			
+
 			row = sheet.getRow(0);
 			for (int i = eventStartIndex; i <= row.getLastCellNum(); i++) {
 				cell = row.getCell(i);
@@ -188,13 +195,21 @@ public class ExcelReader {
 
 				participant.setEmpId(getCellValue(cell));
 
-				cell = row.getCell(map.get("fName"));
-				participant.setFname(getCellValue(cell));
+				if (!map.containsKey("fullName")) {
+					cell = row.getCell(map.get("fName"));
+					participant.setFname(getCellValue(cell));
 
-				// if (pMap.containsKey("lName")) {
-				cell = row.getCell(map.get("lName"));
-				participant.setLname(getCellValue(cell));
-				// }
+					// if (pMap.containsKey("lName")) {
+					cell = row.getCell(map.get("lName"));
+					participant.setLname(getCellValue(cell));
+					// }
+				} else {
+					cell = row.getCell(map.get("fullName"));
+					String value = getCellValue(cell);
+					String[] names = value.split("\\s+");
+					participant.setFname(names[0]);
+					participant.setLname(names[1]);
+				}
 
 				cell = row.getCell(map.get("email"));
 				participant.setEmailId(getCellValue(cell));
@@ -212,26 +227,25 @@ public class ExcelReader {
 						cell = row.getCell(map.get("location"));
 						String location = getCellValue(cell);
 
+						List<Integer> locList = null;
 						if (eventLocationMap.containsKey(location)) {
-							tempList = eventLocationMap.get(location);
-							tempList.add(String.valueOf(i));
+							locList = eventLocationMap.get(location);
+							locList.add(Integer.valueOf(i));
 						} else {
-							tempList = new ArrayList<String>();
-							tempList.add(String.valueOf(i));
-							eventLocationMap.put(location, tempList);
+							locList = new ArrayList<Integer>();
+							locList.add(Integer.valueOf(i));
+							eventLocationMap.put(location, locList);
 						}
 					}
 				}
 			}
 			System.out.println();
-			
-			
-			resultMap.put("participant",pMap);
-			resultMap.put("eventLocationMap",eventLocationMap);
-			resultMap.put("eventMap",eventMap);
+
+			resultMap.put("participant", pMap);
+			resultMap.put("eventLocationMap", eventLocationMap);
+			resultMap.put("eventMap", eventMap);
 			resultMap.put("eventUserMap", eventUserMap);
-			
-			
+
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}

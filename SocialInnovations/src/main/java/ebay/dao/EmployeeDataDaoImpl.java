@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -100,6 +102,9 @@ public class EmployeeDataDaoImpl implements EmployeeDataDao {
 			sql = "select DISTINCT(emp_id) from employee";
 			stmt = dbCon.prepareStatement(sql);
 			rs = stmt.executeQuery();
+			
+			Collection<Participant> pMapValues = pMap.values();
+			
 			while (rs.next()) {
 				String key = rs.getString(1);
 				System.out.println("key: " + key);
@@ -121,17 +126,17 @@ public class EmployeeDataDaoImpl implements EmployeeDataDao {
 				}
 				stmt.executeBatch();
 
-				sql = "insert into participant(emp_id,event_id) values (?,?)";
-				stmt = dbCon.prepareStatement(sql);
-				for (Participant p : pMap.values()) {
-					colIndex = 1;
-					stmt.setInt(colIndex++, Integer.parseInt(p.getEmpId()));
-					stmt.setInt(colIndex++, eventId);
-					stmt.addBatch();
-				}
-				stmt.executeBatch();
-
 			}
+			
+			sql = "insert into participant(emp_id,event_id) values (?,?)";
+			stmt = dbCon.prepareStatement(sql);
+			for (Participant p : pMapValues) {
+				colIndex = 1;
+				stmt.setInt(colIndex++, Integer.parseInt(p.getEmpId()));
+				stmt.setInt(colIndex++, eventId);
+				stmt.addBatch();
+			}
+			stmt.executeBatch();
 
 			dbCon.commit();
 			result = "success";
@@ -154,7 +159,7 @@ public class EmployeeDataDaoImpl implements EmployeeDataDao {
 	public void createUser(UserSignUp userData) throws SQLException,
 			UserDataException {
 		// TODO Auto-generated method stub
-		String result = "fail";
+//		String result = "fail";
 		Connection dbCon = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
@@ -451,7 +456,7 @@ public class EmployeeDataDaoImpl implements EmployeeDataDao {
 	@Override
 	public String insertYearData(Map<String, Participant> pMap,
 			Map<Integer, List<String>> eventUserMap,
-			Map<String, List<String>> eventLocationMap,
+			Map<String, List<Integer>> eventLocationMap,
 			Map<String, Integer> eventMap, String year) throws SQLException {
 		// 
 
@@ -459,7 +464,9 @@ public class EmployeeDataDaoImpl implements EmployeeDataDao {
 		Connection dbCon = null;
 		PreparedStatement stmt = null;
 		ResultSet rs = null;
-
+		
+		Map<Integer,Integer> indextoEventIdMap = new HashMap<Integer,Integer>();
+		
 		try {
 
 			int eventId = 1;
@@ -484,22 +491,29 @@ public class EmployeeDataDaoImpl implements EmployeeDataDao {
 				stmt.setString(colIndex++, eventName);
 				stmt.setInt(colIndex++, eventId);
 				stmt.setInt(colIndex++, Integer.parseInt(year));
+				stmt.addBatch();
 				
+				indextoEventIdMap.put(eventMap.get(eventName), Integer.valueOf(eventId));
+				eventId++;
 				
 			}
 			stmt.executeUpdate();
 			sql = "insert into location (event_id,event_location) values (?,?)";
 			stmt = dbCon.prepareStatement(sql);
-			/*for (String loc : locationSet) {
-				colIndex = 1;
-				stmt.setInt(colIndex++, eventId);
-				stmt.setString(colIndex, loc);
-				stmt.addBatch();
-			}*/
+			for (String loc : eventLocationMap.keySet()) {
+				for(Integer i : eventLocationMap.get(loc)){
+					colIndex = 1;
+					stmt.setInt(colIndex++, indextoEventIdMap.get(i));
+					stmt.setString(colIndex, loc);
+					stmt.addBatch();
+				}
+			}
 			stmt.executeBatch();
+
 			sql = "select DISTINCT(emp_id) from employee";
 			stmt = dbCon.prepareStatement(sql);
 			rs = stmt.executeQuery();
+			Collection<Participant> pMapValues = pMap.values();
 			while (rs.next()) {
 				String key = rs.getString(1);
 				System.out.println("key: " + key);
@@ -521,17 +535,19 @@ public class EmployeeDataDaoImpl implements EmployeeDataDao {
 				}
 				stmt.executeBatch();
 
-				sql = "insert into participant(emp_id,event_id) values (?,?)";
-				stmt = dbCon.prepareStatement(sql);
-				for (Participant p : pMap.values()) {
+			}
+			
+			sql = "insert into participant(emp_id,event_id) values (?,?)";
+			stmt = dbCon.prepareStatement(sql);
+			for (Integer index : eventUserMap.keySet()) {
+				for(String empId :eventUserMap.get(index)) {
 					colIndex = 1;
-					stmt.setInt(colIndex++, Integer.parseInt(p.getEmpId()));
-					stmt.setInt(colIndex++, eventId);
+					stmt.setInt(colIndex++, Integer.parseInt(empId));
+					stmt.setInt(colIndex++, indextoEventIdMap.get(index));
 					stmt.addBatch();
 				}
-				stmt.executeBatch();
-
 			}
+			stmt.executeBatch();
 
 			dbCon.commit();
 			result = "success";
